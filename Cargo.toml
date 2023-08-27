@@ -1,0 +1,11 @@
+[package]
+name = "mlc_crab_bot"
+version = "1.0.0"
+edition = "2021"
+
+[dependencies]
+serenity = { version = "0.11.5", default-features = false, features = ["client", "gateway", "rustls_backend", "model"] }
+tokio = { version = "1.26.0", features = ["macros", "rt-multi-thread"] }
+regex = "1.7.0"
+dotenv = "0.15.0"
+tracing = "0.1.37"

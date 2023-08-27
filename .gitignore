@@ -1,0 +1,5 @@
+/target
+/local
+.env
+Secrets*.toml
+Cargo.lock
