@@ -5,22 +5,23 @@ use serenity::model::prelude::interaction::application_command::{
     CommandDataOptionValue,
 };
 
-
 // private function to unwrap the data option
 fn unwrap_data_option(option_value: &CommandDataOptionValue) -> Option<String> {
     
     // if option string => string,
     // if option boolean => Yes/No
     // else None
-    if let CommandDataOptionValue::String(value) = option_value {
-        Some(value.clone())
-    } else if let CommandDataOptionValue::Boolean(value) = option_value {
-        match value {
-            true => Some("Yes".to_string()),
-            false => Some("No".to_string()),
-        }
-    } else {
-        None
+    match option_value {
+        CommandDataOptionValue::String(value) => Some(value.clone()),
+        CommandDataOptionValue::Boolean(value) => Some(
+            if *value {
+                "Yes".to_string()
+            } else {
+                "No".to_string()
+            }
+        ),
+        // CommandDataOptionValue::Integer(value) => Some(value.to_string()),
+        _ => None,
     }
 
 }//end unwrap_data_option
@@ -28,7 +29,7 @@ fn unwrap_data_option(option_value: &CommandDataOptionValue) -> Option<String> {
 
 // public function to run the command
 pub fn run(options: &[CommandDataOption]) -> String {
-
+    
     // unwrap the data options from users responses
     let name_option = unwrap_data_option(options
         .get(0)
@@ -51,17 +52,28 @@ pub fn run(options: &[CommandDataOption]) -> String {
         .as_ref()
         .expect("Expected interests object")).unwrap();
 
-    let add_to_email_option = unwrap_data_option(options
+    let uni_option = unwrap_data_option(options
         .get(3)
+        .expect("Expected university option")
+        .resolved
+        .as_ref()
+        .expect("Expected university object")).unwrap();
+
+    let add_to_email_option = unwrap_data_option(options
+        .get(4)
         .expect("Expected add_to_email_distro option")
         .resolved
         .as_ref()
         .expect("Expected add_to_email_distro object")).unwrap();
-
+    
     // return the formatted string
     format!(
-        "Enrolling new student:\nName: {:?}\nEmail: {:?}\nInterests: {:?}\nAdd to email distro: {:?}",
-        name_option, email_option, interests_option, add_to_email_option
+        "Enrolling new student:\nName: {:?}\nEmail: {:?}\nInterests: {:?}\nUniversity: {:?}\nAdd to email distro: {:?}\n@Officers",
+        name_option, 
+        email_option, 
+        interests_option, 
+        uni_option,
+        add_to_email_option
     )
 
 }//end run
@@ -100,6 +112,19 @@ pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicatio
                 .description("Areas of interest.")
                 .kind(CommandOptionType::String)
                 .required(true)
+        })
+        
+        // create university student distinction option
+        // create university option
+        .create_option(|student_uni| {
+            student_uni
+                .name("student_uni")
+                .description("Which college are you with?")
+                .kind(CommandOptionType::String)
+                .required(true)
+                .add_string_choice("uni_one", "uni_one")
+                .add_string_choice("uni_two", "uni_two")
+                .add_string_choice("Other or N/A", "Other / N/A")
         })
         
         // create email distro sub option

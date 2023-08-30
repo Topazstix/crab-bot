@@ -3,3 +3,4 @@
 .env
 Secrets*.toml
 Cargo.lock
+enrollments*.json

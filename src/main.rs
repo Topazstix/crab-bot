@@ -1,16 +1,18 @@
 mod commands;
+mod backend;
 
 use dotenv;
 use regex::Regex;
 use tracing::error;
+use serde_json::json;
 use serenity::prelude::*;
 use serenity::async_trait;
 use serenity::model::gateway::Ready;
 use serenity::model::channel::Message;
+use backend::database_storage::Enrollment;
 use serenity::model::id::{ChannelId, GuildId, RoleId};
 use serenity::model::application::interaction::{Interaction, InteractionResponseType};
 
-// use serenity::model::application::command::Command;
 
 
 struct Bot;
@@ -125,10 +127,19 @@ impl EventHandler for Bot {
             if enroll_match.is_match(&msg.content) && msg.author.bot {
 
                 // pull user and guild IDs from the message
-                let user_id = msg.interaction.unwrap().user.id;
+                let user_id = msg.interaction.as_ref().unwrap().user.id;
+                let user_name = msg.interaction.unwrap().user.name;
                 let guild_id = msg.guild_id.unwrap();
-                let student_id = RoleId(
-                    dotenv::var("STUDENT_ROLE_ID")
+                
+                // pull env vars
+                let uni_one_id = RoleId(
+                    dotenv::var("uni_one_ID")
+                        .unwrap()
+                        .parse::<u64>()
+                        .expect("Student Role ID Var not found"),
+                );
+                let uni_two_id = RoleId(
+                    dotenv::var("uni_two_ID")
                         .unwrap()
                         .parse::<u64>()
                         .expect("Student Role ID Var not found"),
@@ -139,34 +150,84 @@ impl EventHandler for Bot {
                         .parse::<u64>()
                         .expect("Remove Role ID Var not found"),
                 );
-
-                // remove entry point role
-                if let Err(e) = guild_id.member(&ctx.http, user_id).await.unwrap().remove_role(&ctx.http, remove_id).await {
-                    error!("Error removing role: {:?}", e);
-                }
-
-                // add student role
-                if let Err(e) = guild_id.member(&ctx.http, user_id).await.unwrap().add_role(&ctx.http, student_id).await {
-                    error!("Error adding role: {:?}", e);
-                }
-
-
-                // change the user's nickname for the guild to their response to the enrollment form
-                //TODO: NOT WORKING
+                
+                // Pull student responses from enrollment message
                 let nickname = msg.content
                     .split("\n")
                     .collect::<Vec<&str>>()[1]
                     .split(": ")
                     .collect::<Vec<&str>>()[1]
+                    .trim_matches('"')
                     .to_string();
+                let email_response = msg.content
+                    .split("\n")
+                    .collect::<Vec<&str>>()[2]
+                    .split(": ")
+                    .collect::<Vec<&str>>()[1]
+                    .trim_matches('"');
+                let interests_response = msg.content
+                    .split("\n")
+                    .collect::<Vec<&str>>()[3]
+                    .split(": ")
+                    .collect::<Vec<&str>>()[1]
+                    .trim_matches('"');
+                let uni_response = msg.content
+                    .split("\n")
+                    .collect::<Vec<&str>>()[4]
+                    .split(": ")
+                    .collect::<Vec<&str>>()[1]
+                    .trim_matches('"');
+                let distro_response = msg.content
+                    .split("\n")
+                    .collect::<Vec<&str>>()[5]
+                    .split(": ")
+                    .collect::<Vec<&str>>()[1]
+                    .trim_matches('"');
 
+                // remove entry point role if uni_response matches "uni_one" or "uni_two"
+                if let "uni_one" | "uni_two" = uni_response {
+                    if let Err(e) = guild_id.member(&ctx.http, user_id).await.unwrap().remove_role(&ctx.http, remove_id).await {
+                        error!("Error removing role: {:?}", e);
+                    }
+
+                    // add university student roles
+                    if uni_response == "uni_one" {
+                        if let Err(e) = guild_id.member(&ctx.http, user_id).await.unwrap().add_role(&ctx.http, uni_one_id).await {
+                            error!("Error adding role: {:?}", e);
+                        }
+                    } else if uni_response == "uni_two" {
+                        if let Err(e) = guild_id.member(&ctx.http, user_id).await.unwrap().add_role(&ctx.http, uni_two_id).await {
+                            error!("Error adding role: {:?}", e);
+                        }
+                    }
+                }
+
+                // change the user's nickname for the guild to their response to the enrollment form
                 if let Ok(member) = guild_id.member(&ctx.http, user_id).await {
-                    if let Err(e) = member.edit(&ctx.http, |guild_user| guild_user.nickname(nickname)).await {
+                    if let Err(e) = member.edit(&ctx.http, |guild_user| guild_user.nickname(&nickname)).await {
                         error!("Error changing nickname: {:?}", e);
                     } else {
                         error!("Error: Member not found");
                     }
                 }
+
+                // store the users data in the database
+                let user_data_json = json!({
+                    "user_id": user_id.as_u64(),
+                    "user_name": user_name,
+                    "name": nickname,
+                    "university": uni_response,
+                    "email": email_response,
+                    "interests": interests_response,
+                    "email_distro": distro_response,
+                });
+
+                let user_data: Enrollment = serde_json::from_value(user_data_json).unwrap();
+                
+                if let Err(e) = backend::database_storage::save_to_json(&user_data) {
+                    error!("Error saving to json: {:?}", e);
+                }
+
             }
         }//end enrollment match and send
 
