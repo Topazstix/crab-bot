@@ -19,58 +19,6 @@ struct Bot;
 
 #[async_trait]
 impl EventHandler for Bot {
-    
-    // handle event interactions from server (slash commands)
-    async fn interaction_create(&self, ctx: Context, interaction: Interaction) {
-        
-        if let Interaction::ApplicationCommand(command) = interaction {
-            println!("Received command interaction: {:#?}", command);
-            
-            // determine what command to run from the users input
-            let content = match command.data.name.as_str() {
-                "enrollment" => commands::enrollment::run(&command.data.options),
-                _ => "not implemented :(".to_string(), // handle invalid commands
-            };
-            
-            // respond to the command with the content from the command
-            if let Err(why) = command 
-                .create_interaction_response(&ctx.http, |response| {
-                response
-                    .kind(InteractionResponseType::ChannelMessageWithSource)
-                    .interaction_response_data(|message| message.content(content))
-            }).await {
-                error!("Cannot respond to slash command: {}", why);
-            }
-
-        }
-
-    }//end interaction_create
-
-
-    // handle bot ready event
-    async fn ready(&self, ctx: Context, ready: Ready) {
-        
-        println!("{} is connected!", ready.user.name);
-
-        // pull guild ID (discord server ID)
-        let guild_id = GuildId(
-            dotenv::var("GUILD_ID")
-                .expect("Expected GUILD_ID in environment")
-                .parse::<u64>()
-                .expect("GUILD_ID must be an integer"),
-        );
-
-        // create commands for given guild
-        let commands = GuildId::set_application_commands(&guild_id, &ctx.http, |commands| {
-            commands
-                .create_application_command(|command| commands::enrollment::register(command))
-        }).await;
-
-        println!("The following commands are available: {:#?}", commands);
-
-    }//end ready
-
-
     // handle reading and sending messages
     async fn message(&self, ctx: Context, msg: Message) {
 
@@ -105,7 +53,7 @@ impl EventHandler for Bot {
         let http_match = Regex::new(r"^(https|http|\^\^).*").unwrap();
         let enroll_match = Regex::new(r"^Enrolling new student:").unwrap();
 
-        // if the message is in the reading channel and matches the http regex, 
+        // if the message is in the reading channel and matches the http regex,
         // send it to the destin channel
         if msg.channel_id == reading_channel && http_match.is_match(&msg.content) && !msg.author.bot {
 
@@ -225,6 +173,57 @@ impl EventHandler for Bot {
             }
 
         }//end enrollment match and send
+
+    }//end interaction_create
+
+
+    // handle bot ready event
+    async fn ready(&self, ctx: Context, ready: Ready) {
+        
+        println!("{} is connected!", ready.user.name);
+
+        // pull guild ID (discord server ID)
+        let guild_id = GuildId(
+            dotenv::var("GUILD_ID")
+                .expect("Expected GUILD_ID in environment")
+                .parse::<u64>()
+                .expect("GUILD_ID must be an integer"),
+        );
+
+        // create commands for given guild
+        let commands = GuildId::set_application_commands(&guild_id, &ctx.http, |commands| {
+            commands
+                .create_application_command(|command| commands::enrollment::register(command))
+        }).await;
+
+        println!("The following commands are available: {:#?}", commands);
+
+    }//end ready
+
+
+    // handle event interactions from server (slash commands)
+    async fn interaction_create(&self, ctx: Context, interaction: Interaction) {
+
+        if let Interaction::ApplicationCommand(command) = interaction {
+            println!("Received command interaction: {:#?}", command);
+
+            // determine what command to run from the users input
+            let content = match command.data.name.as_str() {
+                "enrollment" => commands::enrollment::run(&command.data.options),
+                _ => "not implemented :(".to_string(), // handle invalid commands
+            };
+
+            // respond to the command with the content from the command
+            if let Err(why) = command
+                .create_interaction_response(&ctx.http, |response| {
+                response
+                    .kind(InteractionResponseType::ChannelMessageWithSource)
+                    .interaction_response_data(|message| message.content(content))
+            }).await {
+                error!("Cannot respond to slash command: {}", why);
+            }
+
+        }
 
     }//end message
 
