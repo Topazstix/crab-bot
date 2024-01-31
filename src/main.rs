@@ -17,12 +17,20 @@ use std::str::FromStr;
 
 struct Bot;
 
+// parses environment variables T that meet the trait bounds into K which need to also meet the trait bounds
 fn parse_env<T, K: FromStr>(var: &T) -> K where T: AsRef<OsStr> + std::fmt::Debug + Sized  {
     dotenv::var(var).unwrap().parse().unwrap_or_else(|_| panic!("{:?} not found / not integer", var))
 }
 
-fn parse_response<'a>(responses: &mut dyn Iterator<Item=&str>) -> &'a str {
-    responses.next().expect("No Next value in registration response").split(": ").nth(1).expect("No value associated with registration response").trim_matches('"')
+// takes in a mutable iterator of string literals '
+// returns the user response
+fn parse_response<'a>(responses: &mut dyn Iterator<Item = &'a str>) -> &'a str {
+    // gets next value
+    responses.next().expect("No Next value in registration response")
+        // get the user input of the field
+        .split(": ").nth(1).expect("No value associated with registration response")
+        // trims quotations
+        .trim_matches('"')
 }
 
 // const env vars
@@ -40,11 +48,6 @@ impl EventHandler for Bot {
     // handle reading and sending messages
     async fn message(&self, ctx: Context, msg: Message) {
 
-        // pull Channel Id environment vars from .env file
-        let destin_channel = ChannelId(parse_env(&DESTIN_CHANNEL_ID));
-        let reading_channel = ChannelId(parse_env(&READING_CHANNEL_ID));
-        let enroll_channel = ChannelId(parse_env(&ENROLL_CHANNEL_ID));
-
         // secret command :)
         if msg.content == "!hello" {
             if let Err(e) = msg.channel_id.say(&ctx.http, "world!").await {
@@ -52,6 +55,12 @@ impl EventHandler for Bot {
             };
             return
         }
+
+        // pull Channel Id environment vars from .env file
+        let destin_channel = ChannelId(parse_env(&DESTIN_CHANNEL_ID));
+        let reading_channel = ChannelId(parse_env(&READING_CHANNEL_ID));
+        let enroll_channel = ChannelId(parse_env(&ENROLL_CHANNEL_ID));
+
 
         // set regular expression patterns for matching messages
         let http_match = Regex::new(r"^(https|http|\^\^).*").unwrap();
@@ -85,12 +94,13 @@ impl EventHandler for Bot {
             let remove_id = RoleId(parse_env(&REMOVE_ROLE_ID));
 
             // Pull student responses from enrollment message
-            let mut data = msg.content.lines().skip(1);
-            let nickname = parse_response(&mut data);
-            let email_response = parse_response(&mut data);
-            let interests_response = parse_response(&mut data);
-            let uni_response = parse_response(&mut data);
-            let distro_response = parse_response(&mut data);
+            // skips the first element in response iterator
+            let mut response = msg.content.lines().skip(1);
+            let nickname = parse_response(&mut response);
+            let email_response = parse_response(&mut response);
+            let interests_response = parse_response(&mut response);
+            let uni_response = parse_response(&mut response);
+            let distro_response = parse_response(&mut response);
 
             // remove entry point role if uni_response matches "uni_one" or "uni_two"
             if let "uni_one" | "uni_two" = uni_response {
@@ -112,7 +122,7 @@ impl EventHandler for Bot {
 
             // change the user's nickname for the guild to their response to the enrollment form
             if let Ok(member) = guild_id.member(&ctx.http, user_id).await {
-                if let Err(e) = member.edit(&ctx.http, |guild_user| guild_user.nickname(&nickname)).await {
+                if let Err(e) = member.edit(&ctx.http, |guild_user| guild_user.nickname(nickname)).await {
                     error!("Error changing nickname: {:?}", e);
                 } else {
                     error!("Error: Member not found");
