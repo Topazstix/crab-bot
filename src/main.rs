@@ -12,10 +12,22 @@ use serenity::model::channel::Message;
 use backend::database_storage::Enrollment;
 use serenity::model::id::{ChannelId, GuildId, RoleId};
 use serenity::model::application::interaction::{Interaction, InteractionResponseType};
-
-
+use std::ffi::OsStr;
+use std::str::FromStr;
 
 struct Bot;
+
+fn parse_env<T, K: FromStr>(var: &T) -> K where T: AsRef<OsStr> + std::fmt::Debug + Sized  {
+    dotenv::var(var).unwrap().parse().unwrap_or_else(|_| panic!("{:?} not found / not integer", var))
+}
+
+const DESTIN_CHANNEL_ID: &str = "DESTIN_CHANNEL_ID";
+const READING_CHANNEL_ID: &str = "READING_CHANNEL_ID";
+const ENROLL_CHANNEL_ID: &str = "ENROLL_CHANNEL_ID";
+
+const GUILD_ID: &str = "GUILD_ID";
+
+const DISCORD_TOKEN: &str = "DISCORD_TOKEN";
 
 #[async_trait]
 impl EventHandler for Bot {
@@ -23,30 +35,16 @@ impl EventHandler for Bot {
     async fn message(&self, ctx: Context, msg: Message) {
 
         // pull Channel Id environment vars from .env file
-        let destin_channel = ChannelId(
-            dotenv::var("DESTIN_CHANNEL_ID")
-                .unwrap()
-                .parse::<u64>()
-                .expect("Destin ID Var not found")
-        );
-        let reading_channel = ChannelId(
-            dotenv::var("READING_CHANNEL_ID")
-                .unwrap()
-                .parse::<u64>()
-                .expect("Reading ID Var not found"),
-        );
-        let enroll_channel = ChannelId(
-            dotenv::var("ENROLL_CHANNEL_ID")
-                .unwrap()
-                .parse::<u64>()
-                .expect("Enroll ID Var not found"),
-        );
+        let destin_channel = ChannelId(parse_env(&DESTIN_CHANNEL_ID));
+        let reading_channel = ChannelId(parse_env(&READING_CHANNEL_ID));
+        let enroll_channel = ChannelId(parse_env(&ENROLL_CHANNEL_ID));
 
         // secret command :)
         if msg.content == "!hello" {
             if let Err(e) = msg.channel_id.say(&ctx.http, "world!").await {
                 error!("Error sending message: {:?}", e);
-            }
+            };
+            return
         }
 
         // set regular expression patterns for matching messages
@@ -183,12 +181,7 @@ impl EventHandler for Bot {
         println!("{} is connected!", ready.user.name);
 
         // pull guild ID (discord server ID)
-        let guild_id = GuildId(
-            dotenv::var("GUILD_ID")
-                .expect("Expected GUILD_ID in environment")
-                .parse::<u64>()
-                .expect("GUILD_ID must be an integer"),
-        );
+        let guild_id = GuildId(parse_env(&GUILD_ID));
 
         // create commands for given guild
         let commands = GuildId::set_application_commands(&guild_id, &ctx.http, |commands| {
@@ -235,7 +228,7 @@ impl EventHandler for Bot {
 async fn main() {
 
     // Configure the client with your Discord bot token in the environment.
-    let token = dotenv::var("DISCORD_TOKEN").expect("Expected a token in the environment");
+    let token: String = parse_env(&DISCORD_TOKEN);
 
     // Set gateway intents, which decides what events the bot will be notified about
     let intents = GatewayIntents::GUILD_MESSAGES | GatewayIntents::MESSAGE_CONTENT |
