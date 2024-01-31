@@ -1,7 +1,7 @@
 mod commands;
 mod backend;
 
-use dotenv;
+
 use regex::Regex;
 use tracing::error;
 use serde_json::json;
@@ -103,13 +103,13 @@ impl EventHandler for Bot {
 
         // set regular expression patterns for matching messages
         let http_match = Regex::new(r"^(https|http|\^\^).*").unwrap();
-        let enroll_match = Regex::new(r"^Enrolling new student\:").unwrap();
+        let enroll_match = Regex::new(r"^Enrolling new student:").unwrap();
 
         // if the message is in the reading channel and matches the http regex, 
         // send it to the destin channel
         if msg.channel_id == reading_channel {
             if http_match.is_match(&msg.content) && !msg.author.bot {
-                
+
                 // Make a prettier message with the original authors name to send
                 let message = format!(".\n*This was originally posted by `{}`:*\n{}", msg.author.name, msg.content);
 
@@ -123,14 +123,14 @@ impl EventHandler for Bot {
         // if the message is in the enrollment channel and matches the enrollment regex,
         // add the student role, remove the entry point role, and change the user's nickname
         if msg.channel_id == enroll_channel {
-            
+
             if enroll_match.is_match(&msg.content) && msg.author.bot {
 
                 // pull user and guild IDs from the message
                 let user_id = msg.interaction.as_ref().unwrap().user.id;
                 let user_name = msg.interaction.unwrap().user.name;
                 let guild_id = msg.guild_id.unwrap();
-                
+
                 // pull env vars
                 let uni_one_id = RoleId(
                     dotenv::var("uni_one_ID")
@@ -150,7 +150,7 @@ impl EventHandler for Bot {
                         .parse::<u64>()
                         .expect("Remove Role ID Var not found"),
                 );
-                
+
                 // Pull student responses from enrollment message
                 let nickname = msg.content
                     .split("\n")
@@ -223,7 +223,7 @@ impl EventHandler for Bot {
                 });
 
                 let user_data: Enrollment = serde_json::from_value(user_data_json).unwrap();
-                
+
                 if let Err(e) = backend::database_storage::save_to_json(&user_data) {
                     error!("Error saving to json: {:?}", e);
                 }
