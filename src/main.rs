@@ -21,13 +21,19 @@ fn parse_env<T, K: FromStr>(var: &T) -> K where T: AsRef<OsStr> + std::fmt::Debu
     dotenv::var(var).unwrap().parse().unwrap_or_else(|_| panic!("{:?} not found / not integer", var))
 }
 
+fn parse_response<'a>(responses: &mut dyn Iterator<Item=&str>) -> &'a str {
+    responses.next().expect("No Next value in registration response").split(": ").nth(1).expect("No value associated with registration response").trim_matches('"')
+}
+
+// const env vars
 const DESTIN_CHANNEL_ID: &str = "DESTIN_CHANNEL_ID";
 const READING_CHANNEL_ID: &str = "READING_CHANNEL_ID";
 const ENROLL_CHANNEL_ID: &str = "ENROLL_CHANNEL_ID";
-
 const GUILD_ID: &str = "GUILD_ID";
-
 const DISCORD_TOKEN: &str = "DISCORD_TOKEN";
+const UNI_ONE_ID: &str = "uni_one_ID";
+const UNI_TWO_ID: &str = "uni_two_ID";
+const REMOVE_ROLE_ID: &str = "REMOVE_ROLE_ID";
 
 #[async_trait]
 impl EventHandler for Bot {
@@ -74,57 +80,17 @@ impl EventHandler for Bot {
             let guild_id = msg.guild_id.unwrap();
 
             // pull env vars
-            let uni_one_id = RoleId(
-                dotenv::var("uni_one_ID")
-                    .unwrap()
-                    .parse::<u64>()
-                    .expect("Student Role ID Var not found"),
-            );
-            let uni_two_id = RoleId(
-                dotenv::var("uni_two_ID")
-                    .unwrap()
-                    .parse::<u64>()
-                    .expect("Student Role ID Var not found"),
-            );
-            let remove_id = RoleId(
-                dotenv::var("REMOVE_ROLE_ID")
-                    .unwrap()
-                    .parse::<u64>()
-                    .expect("Remove Role ID Var not found"),
-            );
+            let uni_one_id = RoleId(parse_env(&UNI_ONE_ID));
+            let uni_two_id = RoleId(parse_env(&UNI_TWO_ID));
+            let remove_id = RoleId(parse_env(&REMOVE_ROLE_ID));
 
             // Pull student responses from enrollment message
-            let nickname = msg.content
-                .split("\n")
-                .collect::<Vec<&str>>()[1]
-                .split(": ")
-                .collect::<Vec<&str>>()[1]
-                .trim_matches('"')
-                .to_string();
-            let email_response = msg.content
-                .split("\n")
-                .collect::<Vec<&str>>()[2]
-                .split(": ")
-                .collect::<Vec<&str>>()[1]
-                .trim_matches('"');
-            let interests_response = msg.content
-                .split("\n")
-                .collect::<Vec<&str>>()[3]
-                .split(": ")
-                .collect::<Vec<&str>>()[1]
-                .trim_matches('"');
-            let uni_response = msg.content
-                .split("\n")
-                .collect::<Vec<&str>>()[4]
-                .split(": ")
-                .collect::<Vec<&str>>()[1]
-                .trim_matches('"');
-            let distro_response = msg.content
-                .split("\n")
-                .collect::<Vec<&str>>()[5]
-                .split(": ")
-                .collect::<Vec<&str>>()[1]
-                .trim_matches('"');
+            let mut data = msg.content.lines().skip(1);
+            let nickname = parse_response(&mut data);
+            let email_response = parse_response(&mut data);
+            let interests_response = parse_response(&mut data);
+            let uni_response = parse_response(&mut data);
+            let distro_response = parse_response(&mut data);
 
             // remove entry point role if uni_response matches "uni_one" or "uni_two"
             if let "uni_one" | "uni_two" = uni_response {
