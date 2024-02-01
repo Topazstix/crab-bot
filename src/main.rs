@@ -2,6 +2,7 @@ mod commands;
 mod backend;
 
 
+use std::collections::HashMap;
 use regex::Regex;
 use tracing::error;
 use serde_json::json;
@@ -14,8 +15,19 @@ use serenity::model::id::{ChannelId, GuildId, RoleId};
 use serenity::model::application::interaction::{Interaction, InteractionResponseType};
 use std::ffi::OsStr;
 use std::str::FromStr;
+use serde_derive::Deserialize;
+use tokio::fs;
+use toml::de::Error;
 
 struct Bot;
+
+#[derive(Debug, Deserialize)]
+struct Data {
+    token: HashMap<String, String>,
+    guild: HashMap<String, u64>,
+    roles: HashMap<String, u64>,
+    channels: HashMap<String, u64>,
+}
 
 // parses environment variables T that meet the trait bounds into K which need to also meet the trait bounds
 fn parse_env<T, K: FromStr>(var: &T) -> K where T: AsRef<OsStr> + std::fmt::Debug + Sized  {
@@ -33,12 +45,17 @@ fn parse_response<'a>(responses: &mut dyn Iterator<Item = &'a str>) -> &'a str {
         .trim_matches('"')
 }
 
+async fn get_config() -> Result<Data, Error> {
+    let data = fs::read_to_string("config.toml").await.unwrap();
+    toml::from_str(&data)
+}
+
 // const env vars
 const DESTIN_CHANNEL_ID: &str = "DESTIN_CHANNEL_ID";
 const READING_CHANNEL_ID: &str = "READING_CHANNEL_ID";
 const ENROLL_CHANNEL_ID: &str = "ENROLL_CHANNEL_ID";
 const GUILD_ID: &str = "GUILD_ID";
-const DISCORD_TOKEN: &str = "DISCORD_TOKEN";
+const DISCORD_TOKEN: &str = "discord_token";
 const UNI_ONE_ID: &str = "uni_one_ID";
 const UNI_TWO_ID: &str = "uni_two_ID";
 const REMOVE_ROLE_ID: &str = "REMOVE_ROLE_ID";
@@ -202,16 +219,16 @@ impl EventHandler for Bot {
 
 #[tokio::main]
 async fn main() {
-
     // Configure the client with your Discord bot token in the environment.
-    let token: String = parse_env(&DISCORD_TOKEN);
+    let config = get_config().await.expect("using config.toml gave an error");
+    let token: &String = &config.token[DISCORD_TOKEN];
 
     // Set gateway intents, which decides what events the bot will be notified about
     let intents = GatewayIntents::GUILD_MESSAGES | GatewayIntents::MESSAGE_CONTENT |
         GatewayIntents::GUILD_MEMBERS | GatewayIntents::GUILDS;
 
     // Build our client.
-    let mut client = Client::builder(&token, intents)
+    let mut client = Client::builder(token, intents)
         .event_handler(Bot)
         .await
         .expect("Error creating client");
