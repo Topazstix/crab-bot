@@ -4,6 +4,7 @@ use serenity::model::prelude::interaction::application_command::{
     CommandDataOption,
     CommandDataOptionValue,
 };
+use crate::{get_config, get_roles};
 
 // private function to unwrap the data option
 fn unwrap_data_option(option_value: &CommandDataOptionValue) -> Option<String> {
@@ -121,10 +122,17 @@ pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicatio
                 .name("student_uni")
                 .description("Which college are you with?")
                 .kind(CommandOptionType::String)
-                .required(true)
-                .add_string_choice("uni_one", "uni_one")
-                .add_string_choice("uni_two", "uni_two")
-                .add_string_choice("Other or N/A", "Other / N/A")
+                .required(true);
+            // get the other roles in the configuration
+            let config = get_config().expect("using config.toml gave an error");
+            let roles = get_roles(&config);
+            // add the choices for those roles
+            for role in roles {
+                student_uni.add_string_choice(role.clone(), role);
+            }
+            // add other choice
+            student_uni.add_string_choice("Other or N/A", "Other / N/A");
+            student_uni
         })
         
         // create email distro sub option
