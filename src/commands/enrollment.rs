@@ -32,8 +32,8 @@ fn unwrap_data_option(option_value: &CommandDataOptionValue) -> Option<String> {
 pub fn run(options: &[CommandDataOption]) -> String {
     
     // unwrap the data options from users responses
-    let name_option = unwrap_data_option(options
-        .get(0)
+    let name_option = unwrap_data_option(
+        options.first()
         .expect("Expected name option")
         .resolved
         .as_ref()

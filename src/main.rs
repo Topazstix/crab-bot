@@ -24,6 +24,7 @@ struct Data {
     guild: HashMap<String, u64>,
     roles: HashMap<String, u64>,
     channels: HashMap<String, u64>,
+    features: HashMap<String, bool>,
 }
 
 // takes in a mutable iterator of string literals '
@@ -56,6 +57,7 @@ const ENROLL_CHANNEL_ID: &str = "ENROLL_CHANNEL_ID";
 const GUILD_ID: &str = "GUILD_ID";
 const DISCORD_TOKEN: &str = "discord_token";
 const REMOVE_ROLE_ID: &str = "REMOVE_ROLE_ID";
+const SEND_TO_READING: &str = "SEND_TO_READING";
 
 #[async_trait]
 impl EventHandler for Bot {
@@ -76,6 +78,7 @@ impl EventHandler for Bot {
         let destin_channel = ChannelId(*config.channels.get(DESTIN_CHANNEL_ID).expect("destin channel id not found"));
         let reading_channel = ChannelId(*config.channels.get(READING_CHANNEL_ID).expect("reading channel id not found"));
         let enroll_channel = ChannelId(*config.channels.get(ENROLL_CHANNEL_ID).expect("enroll channel id not found"));
+        let send_to_reading = *config.features.get(SEND_TO_READING).expect("SEND_TO_READING no defined");
 
 
         // set regular expression patterns for matching messages
@@ -84,7 +87,7 @@ impl EventHandler for Bot {
 
         // if the message is in the reading channel and matches the http regex,
         // send it to the destin channel
-        if msg.channel_id == reading_channel && http_match.is_match(&msg.content) && !msg.author.bot {
+        if msg.channel_id == reading_channel && http_match.is_match(&msg.content) && !msg.author.bot && send_to_reading {
 
             // Make a prettier message with the original authors name to send
             let message = format!(".\n*This was originally posted by `{}`:*\n{}", msg.author.name, msg.content);
@@ -111,6 +114,7 @@ impl EventHandler for Bot {
             // Pull student responses from enrollment message
             // skips the first element in response iterator
             let mut response = msg.content.lines().skip(1);
+            // println!("{:?}", response);
             let nickname = parse_response(&mut response);
             let email_response = parse_response(&mut response);
             let interests_response = parse_response(&mut response);
@@ -118,7 +122,9 @@ impl EventHandler for Bot {
             let distro_response = parse_response(&mut response);
 
             // remove entry point role if uni_response matches "uni_one" or "uni_two"
+            println!("{}", uni_response);
             for role in roles {
+                println!("{}",role);
                 if role == uni_response {
                     if let Err(e) = guild_id.member(&ctx.http, user_id).await.unwrap().remove_role(&ctx.http, remove_id).await {
                         error!("Error removing role: {:?}", e);
@@ -171,12 +177,12 @@ impl EventHandler for Bot {
         let guild_id = GuildId(*config.guild.get(GUILD_ID).expect("Unable to find GUILD_ID in config.toml"));
 
         // create commands for given guild
-        let commands = GuildId::set_application_commands(&guild_id, &ctx.http, |commands| {
+        GuildId::set_application_commands(&guild_id, &ctx.http, |commands| {
             commands
                 .create_application_command(|command| commands::enrollment::register(command))
-        }).await;
+        }).await.expect("Unable to add commands for guild");
 
-        println!("The following commands are available: {:#?}", commands);
+        // println!("The following commands are available: {:#?}", commands);
 
     }//end ready
 
@@ -185,11 +191,14 @@ impl EventHandler for Bot {
     async fn interaction_create(&self, ctx: Context, interaction: Interaction) {
 
         if let Interaction::ApplicationCommand(command) = interaction {
-            println!("Received command interaction: {:#?}", command);
+           //  println!("Received command interaction: {:#?}", command);
 
             // determine what command to run from the users input
             let content = match command.data.name.as_str() {
-                "enrollment" => commands::enrollment::run(&command.data.options),
+                "enrollment" => {
+                    commands::enrollment::run(&command.data.options)
+                    // command.member.unwrap().add_role() 
+                },
                 _ => "not implemented :(".to_string(), // handle invalid commands
             };
 
