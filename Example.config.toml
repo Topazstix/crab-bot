@@ -1,0 +1,134 @@
+[TOKEN]
+discord_token ="DISCORD TOKEN HERE"
+
+[GUILD.MAIN]
+GUILD_ID = 1 # the home server of the bot
+PRESIDENT = 1 # who ever is in change of the bot
+
+[GUILD.PARTNERS.a name or something]
+id = 1
+name = "Name of partner"
+SEND_NEWS = true # whether the "partner" want's to receive the news posted or not
+NEWS_CHANNEL = 1
+
+[ROLES.PUBLIC]
+# The supported roles id's that can be given to users
+ROLE1 = 1
+ROLE2 = 1
+other = 1
+
+[ROLES.PRIVATE]
+# the default role given when a user accepts the rules
+REMOVE_ROLE_ID = 1
+# the role who should be notified if something goes wrong in registration (caused by user having higher permission than the bot or already existing in enrollments.json)
+ADMIN_ROLE_ID = 1
+
+[CHANNELS]
+# Channel where user will enroll
+ENROLL_CHANNEL_ID = 1
+# A voice channel where the meetings happen
+MEETING_CHANNEL_ID = 1
+# where the news urls are posted to be shared 
+READING_CHANNEL_ID = 1
+
+# currently not used and can be removed
+[FEATURES]
+SEND_NEWS = true
+
+# to get news
+[RSS.FEED.mandiant]
+url = "https://www.mandiant.com/resources/blog/rss.xml"
+[RSS.FEED.troyhunt]
+url = "https://feeds.feedburner.com/TroyHunt"
+[RSS.FEED.thehackernews]
+url = "https://feeds.feedburner.com/TheHackersNews"
+[RSS.FEED.techspot]
+url = "https://www.techspot.com/backend.xml"
+[RSS.FEED.tomsguide]
+url = "https://www.tomsguide.com/feeds/all"
+[RSS.FEED.malwarebytes]
+url = "https://www.malwarebytes.com/blog/Feed/index.xml"
+[RSS.FEED.acronis]
+url = "https://advisories.feedly.com/acronis/feed.json"
+[RSS.FEED.BleepingComputer]
+url = "http://www.bleepingcomputer.com/feed"
+[RSS.FEED.CISECURITY]
+url = "https://www.cisecurity.org/feed/advisories"
+[RSS.FEED.CERT]
+url = "http://www.kb.cert.org/vulfeed"
+[RSS.FEED.CISAKNOWNVULNS]
+url = "https://advisories.feedly.com/cisa/exploitedCve/feed.json"
+[RSS.FEED.CISAALERTS]
+url = "https://www.us-cert.gov/ncas/alerts.xml"
+[RSS.FEED.CISACURRENTACTIVITY]
+url = "http://www.us-cert.gov/current/index.rdf"
+[RSS.FEED.CYBERADVISORY]
+url = "https://www.cisa.gov/uscert/ncas/alerts.xml"
+[RSS.FEED.CISCOTALOSDISCLOSEDVULNS]
+url = "https://advisories.feedly.com/talos/disclosed/feed.json"
+[RSS.FEED.PACKETSTORM]
+url = "http://rss.packetstormsecurity.com/files/tags/code_execution"
+[RSS.FEED.CXSECURITY]
+url = "http://securityreason.com/rss/SecurityAlert"
+[RSS.FEED.DARKREADING]
+url = "http://www.darkreading.com/rss/all.xml"
+[RSS.FEED.DELLADVISORY]
+url = "https://advisories.feedly.com/dell/feed.json"
+[RSS.FEED.ELASTICSTACK]
+url = "https://discuss.elastic.co/c/announcements/security-announcements/31.rss"
+[RSS.FEED.FULLDISCLOUSRE]
+url = "http://seclists.org/rss/fulldisclosure.rss"
+[RSS.FEED.GitHubADVISORYDATABASE]
+url = "https://advisories.feedly.com/github/advisories/feed.json"
+[RSS.FEED.GOOGLEZERODAY]
+url = "https://advisories.feedly.com/google/0day/feed.json"
+[RSS.FEED.GOOGLEANDROIDSECURITY]
+url = "https://advisories.feedly.com/google/android/feed.json"
+[RSS.FEED.CHROMESECURITY]
+url = "https://advisories.feedly.com/google/chrome/feed.json"
+[RSS.FEED.ICSADVISORY]
+url = "https://www.cisa.gov/uscert/ics/advisories/advisories.xml"
+[RSS.FEED.INTHEWILD]
+url = "https://advisories.feedly.com/inthewild/exploitations/feed.json"
+[RSS.FEED.INTHEWILDEXPLOITS]
+url = "https://advisories.feedly.com/inthewild/exploits/feed.json"
+[RSS.FEED.JVNRSS]
+url = "https://jvn.jp/en/rss/jvn.rdf"
+[RSS.FEED.KREBS]
+url = "http://krebsonsecurity.com/feed/"
+[RSS.FEED.MICROSOFTSECURITYADVISORY]
+url = "https://advisories.feedly.com/microsoft/feed.json"
+[RSS.FEED.MICROSOFTSECURITYBLOG]
+url = "http://blogs.technet.com/mmpc/rss.xml"
+[RSS.FEED.MOZILLASECURITYADVISORY]
+url = "https://advisories.feedly.com/mozilla/feed.json"
+[RSS.FEED.NVD]
+url = "https://advisories.feedly.com/nvd-cve/feed.json"
+[RSS.FEED.NETAPPSECURITYADVISORY]
+url = "https://advisories.feedly.com/netapp/feed.json"
+[RSS.FEED.NVIDIAPRODUCTSECURITY]
+url = "https://advisories.feedly.com/nvidia/feed.json"
+[RSS.FEED.PHORONIX]
+url = "http://feeds.feedburner.com/Phoronix"
+[RSS.FEED.REDHATSECURITYUPDATES]
+url = "https://advisories.feedly.com/redhat/feed.json"
+[RSS.FEED.SCHNEIERONSECURITY]
+url = "http://www.schneier.com/blog/index.rdf"
+[RSS.FEED.SECURELIST]
+url = "https://securelist.com/feed"
+[RSS.FEED.ARSTECHNICA]
+url = "http://arstechnica.com/security/feed"
+[RSS.FEED.QUALYS]
+url = "https://community.qualys.com/blogs/securitylabs/feeds/posts"
+[RSS.FEED.SOPHOS]
+url = "https://blogs.sophos.com/feed"
+[RSS.FEED.CXSECURITYEXPLOIT]
+url = "http://securityreason.com/rss/ExploitAlert"
+[RSS.FEED.STATEOfSECURITY]
+url = "http://feeds.feedburner.com/tripwire-state-of-security"
+[RSS.FEED.TRENDLABSTHREATINTEL]
+url = "http://feeds.trendmicro.com/Anti-MalwareBlog"
+[RSS.FEED.ZDIADVISORY]
+url = "https://advisories.feedly.com/zdi/feed.json"
+[RSS.FEED.ZOOMSECURITY]
+url = "https://advisories.feedly.com/zoom/feed.json"

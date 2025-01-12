@@ -2,24 +2,14 @@
  * Modular Database Storage/API Storage
  */
 
+use crate::storage::user::User;
 use std::collections::HashMap;
-use serde::{Serialize, Deserialize};
-use std::io::Result;
 use std::fs;
+use std::io::Result;
 
-#[derive(Deserialize, Serialize, Debug, Clone)]
-pub struct Enrollment {
-    user_id: u64, 
-    user_name: String,
-    name: String,
-    university: String,
-    email: String,
-    interests: String,
-    email_distro: String,
-}
-
-pub fn save_to_json(enrollment: &Enrollment) -> Result<()> {
-    let mut enrollments: HashMap<u64, Enrollment> = HashMap::new();
+// save the user to enrollments.json
+pub fn save_to_json(enrollment: &User) -> Result<()> {
+    let mut enrollments: HashMap<u64, User> = HashMap::new();
 
     // Load existing data
     if let Ok(data) = fs::read_to_string("enrollments.json") {
@@ -34,4 +24,4 @@ pub fn save_to_json(enrollment: &Enrollment) -> Result<()> {
     fs::write("enrollments.json", data)?;
 
     Ok(())
-}// end save_to_json
+} // end save_to_json
